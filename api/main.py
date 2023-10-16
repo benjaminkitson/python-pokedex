@@ -2,6 +2,8 @@ from flask import Flask, jsonify, request
 import yaml
 import boto3
 import json
+from api.pokedex import Pokedex, Pokemon
+from typing import List
 
 try:
     with open('config.yml', 'r') as file:
@@ -19,35 +21,32 @@ client = boto3.client(
 
 response = client.get_object(Bucket="bk-pokedex-bucket", Key='pokedex.json')
 
-pokedex = response['Body'].read().decode('utf-8')
+pokemons: List[Pokemon] = response['Body'].read().decode('utf-8')
+pokedex = Pokedex(json.loads(pokemons)["pokemon"])
 
 app = Flask(__name__)
 
 
 @app.route('/api')
 def get_all_pokemon():
-    all_pokemon = json.loads(pokedex)["pokemon"]
 
-    name = request.args.get("name")
+    filtered_pokemons = pokedex.pokemons
 
-    return_pokemon = None
-    if (name):
-        for pokemon in all_pokemon:
-            if (pokemon["name"].lower() == name):
-                return_pokemon = pokemon
+    p_id_filter = request.args.get("id")
+    if (p_id_filter):
+        filtered_pokemons = Pokedex.find_pokemon_by_id(
+            filtered_pokemons, p_id_filter)
 
-    id = request.args.get("id")
-    if (id):
-        for pokemon in all_pokemon:
-            if (pokemon["id"].lower() == id):
-                if (return_pokemon and pokemon["name"] != return_pokemon["name"]):
-                    return {"message": "No pokemon found"}, 404
-                return_pokemon = pokemon
+    name_filter = request.args.get("name")
 
-    if (return_pokemon == None):
-        return_pokemon = all_pokemon
+    if (name_filter):
+        filtered_pokemons = Pokedex.find_pokemon_by_name(
+            filtered_pokemons, name_filter)
 
-    return jsonify(return_pokemon)
+    if (filtered_pokemons == None):
+        return {"message": "No matching pokemon found"}, 404
+
+    return jsonify(filtered_pokemons)
 
 
 @app.route('/')
