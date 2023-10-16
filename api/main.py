@@ -4,6 +4,7 @@ import boto3
 import json
 from api.pokedex import Pokedex, Pokemon
 from typing import List
+from flask_cors import cross_origin
 
 try:
     with open('config.yml', 'r') as file:
@@ -28,6 +29,7 @@ app = Flask(__name__)
 
 
 @app.route('/api')
+@cross_origin()
 def get_all_pokemon():
 
     filtered_pokemons = pokedex.pokemons
