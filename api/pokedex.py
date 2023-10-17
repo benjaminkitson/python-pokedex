@@ -19,21 +19,29 @@ class Pokemon():
 class Pokedex():
     def __init__(self, pokemons: List[Pokemon]):
         self._pokemons = pokemons
+        # This could probably be a class of its own
+        self._filters = {
+            "id": None,
+            "name": None,
+        }
 
     @property
     def pokemons(self):
         return self._pokemons
 
-    @staticmethod
-    def find_pokemon_by_id(pokemons: List[Pokemon], p_id: str):
-        for pokemon in pokemons:
-            if (pokemon["id"].lower() == p_id):
-                return [pokemon]
-        return None
+    def apply_filter(self, filter, value):
+        self._filters[filter] = value
+        print(self._filters)
 
-    @staticmethod
-    def find_pokemon_by_name(pokemons: List[Pokemon], name: str):
-        for pokemon in pokemons:
-            if (pokemon["name"].lower() == name):
-                return [pokemon]
-        return None
+    def get_filtered_pokemon(self):
+        filtered_pokemon = self._pokemons
+        filtered_pokemon_container = []
+        for filter in self._filters:
+            if self._filters[filter] != None:
+                for pokemon in filtered_pokemon:
+                    if (pokemon[filter].lower() == self._filters[filter]):
+                        print(pokemon)
+                        filtered_pokemon_container.append(pokemon)
+                filtered_pokemon = filtered_pokemon_container[:]
+                filtered_pokemon_container = []
+        return filtered_pokemon

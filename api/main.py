@@ -2,7 +2,7 @@ from flask import Flask, jsonify, request
 import yaml
 import boto3
 import json
-from api.pokedex import Pokedex, Pokemon
+from pokedex import Pokedex, Pokemon
 from typing import List
 from flask_cors import cross_origin
 
@@ -23,7 +23,6 @@ client = boto3.client(
 response = client.get_object(Bucket="bk-pokedex-bucket", Key='pokedex.json')
 
 pokemons: List[Pokemon] = response['Body'].read().decode('utf-8')
-pokedex = Pokedex(json.loads(pokemons)["pokemon"])
 
 app = Flask(__name__)
 
@@ -32,20 +31,19 @@ app = Flask(__name__)
 @cross_origin()
 def get_all_pokemon():
 
-    filtered_pokemons = pokedex.pokemons
+    pokedex = Pokedex(json.loads(pokemons)["pokemon"])
 
     p_id_filter = request.args.get("id")
     if (p_id_filter):
-        filtered_pokemons = Pokedex.find_pokemon_by_id(
-            filtered_pokemons, p_id_filter)
+        filtered_pokemons = pokedex.apply_filter("id", p_id_filter)
 
     name_filter = request.args.get("name")
-
     if (name_filter):
-        filtered_pokemons = Pokedex.find_pokemon_by_name(
-            filtered_pokemons, name_filter)
+        filtered_pokemons = pokedex.apply_filter("name", name_filter)
 
-    if (filtered_pokemons == None):
+    filtered_pokemons = pokedex.get_filtered_pokemon()
+
+    if (len(filtered_pokemons) == 0):
         return {"message": "No matching pokemon found"}, 404
 
     return jsonify(filtered_pokemons)
