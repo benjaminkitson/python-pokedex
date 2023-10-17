@@ -30,8 +30,9 @@ class Pokedex():
         return self._pokemons
 
     def apply_filter(self, filter, value):
+        if filter not in self._filters.keys():
+            raise KeyError("Invalid filter")
         self._filters[filter] = value
-        print(self._filters)
 
     def get_filtered_pokemon(self):
         filtered_pokemon = self._pokemons
